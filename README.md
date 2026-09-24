@@ -66,12 +66,16 @@ Run the tests. `RESIDUAL_RISK=1` prints the numbers; `--show-output` makes `carg
 # the failure bound only; any build
 RESIDUAL_RISK=1 cargo test -- --show-output
 
-# all three numbers: a coverage build, one test at a time
+# all three numbers (recommended): under cargo-llvm-cov, one test at a time
+cargo install cargo-llvm-cov   # once
+RESIDUAL_RISK=1 cargo llvm-cov --no-report -- --test-threads=1 --show-output
+
+# all three numbers without cargo-llvm-cov: instruments every crate, dependencies included
 RUSTFLAGS="-C instrument-coverage" RESIDUAL_RISK=1 \
   cargo test -- --test-threads=1 --show-output
 ```
 
-With `cargo nextest`, which runs every test in its own process, `--test-threads=1` is not needed. Without `RESIDUAL_RISK=1` nothing is printed, but every test still appends one line to a record file ([The record file](#the-record-file)).
+[cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) instruments only your workspace's own crates, not dependencies such as proptest. The numbers are the same, and it is cheaper: on 11 real crates, 2.25× the time of plain proptest against 3.42× with `RUSTFLAGS` (geometric means; see [Evidence](#evidence)). Drop `--no-report` to also get cargo-llvm-cov's usual coverage report. With `cargo nextest` (`cargo llvm-cov nextest`), which runs every test in its own process, `--test-threads=1` is not needed. Without `RESIDUAL_RISK=1` nothing is printed, but every test still appends one line to a record file ([The record file](#the-record-file)).
 
 ## What the output means
 
@@ -190,7 +194,7 @@ All settings are environment variables. Their names start with `RESIDUAL_RISK`, 
 | `RESIDUAL_RISK_DIR` | Where the record files go | `<target>/<profile>/proptest-residual-risk/` |
 | `RESIDUAL_RISK_CODE` | The code under test: comma-separated path prefixes; a prefix starting with `!` excludes (e.g. `src/,!src/bin/`) | see [Coverage](#coverage) |
 | `RESIDUAL_RISK_TRACE=1` | Also write, for each passing test case, the counters and regions it ran (for checking the estimate) | off |
-| `RESIDUAL_RISK_COVERAGE_EVERY` | Take coverage for every k-th generated test case only; the chance of new code is then computed from those test cases. The failure bound still uses all of them | `1` |
+| `RESIDUAL_RISK_COVERAGE_EVERY` | Take coverage for every k-th generated test case only; the chance of new code is then computed from those test cases, so it describes fewer test cases and reads higher. The failure bound still uses all of them. On 11 crates, k = 4 cost 2.44× and k = 16 cost 2.15× of plain proptest, against 3.42× for k = 1 (all with `RUSTFLAGS`) | `1` |
 
 ## The record file
 
@@ -222,13 +226,14 @@ All measurements below were made with this crate, proptest 1.11.0 and rustc 1.98
 
 **The cost.** On 11 properties of those crates, 5,256 passing test cases per campaign, compared with proptest's own macro:
 
-| Setting | Time relative to proptest alone (geometric mean over 11 properties) |
+| Setting | Time relative to proptest alone: geometric mean (range) over 11 properties |
 | --- | --- |
-| This crate's macro, no coverage | 1.06× |
-| `-C instrument-coverage` only, no coverage feature | 1.86× |
-| Coverage on | 3.42× (1.08–5.4× for the 8 crates whose tests build unoptimised; 10–29× for 3 crates whose manifests build tests at opt-level 3, where instrumentation blocks optimisation) |
+| This crate's macro, no coverage | 1.03× (0.99–1.26×) |
+| Coverage on, under `cargo llvm-cov --no-report` (only the workspace instrumented) | 2.25× (1.09–7.14×) |
+| Coverage on, with `RUSTFLAGS="-C instrument-coverage"` (every crate instrumented) | 3.42× (1.10–28.39×) |
+| For comparison: plain proptest under `cargo llvm-cov`, test run only / with its report | 1.08× (0.99–1.46×) / 2.70× (1.07–68.75×) |
 
-With coverage on, a debug build spends 0.02–0.40 ms more per test case, mostly copying the counters of the code under test before and after each test case. Reading the coverage mapping costs about 50–60 ms once per process, and computing the numbers after a campaign of 5,256 test cases takes 0.015–0.18 s.
+Where the time goes with `RUSTFLAGS`: for the 8 crates whose tests build unoptimised, instrumentation itself costs almost nothing and most of the extra time is reading and comparing the counters of the code under test before and after each test case (0.05–3.55× of plain proptest). For the 3 crates whose manifests build tests at opt-level 3, instrumenting proptest and the other dependencies blocks optimisation (2.7–20× of plain); under cargo-llvm-cov, which leaves dependencies uninstrumented, these fall from 28.4× to 3.1× (base64), 17.6× to 7.1× (regex-syntax) and 10.1× to 4.3× (regex), with the same regions counted. Reading the coverage mapping takes 0.009–0.07 s once per process, and computing the numbers after a campaign of 5,256 test cases 0.001–0.18 s. Building tests in release mode does not help: relative to plain proptest in release mode, coverage costs 16.7× and optimisation drops some counter updates.
 
 **Optimised builds gave the same numbers here.** Three of the crates build their tests at opt-level 3. Rerunning them in debug builds (160 campaigns) gave the same estimates and observed fractions in every campaign, although the debug builds saw up to 7% more regions.
 
@@ -242,7 +247,7 @@ With coverage on, a debug build spends 0.02–0.40 ms more per test case, mostly
 ## Known limitations
 
 - **LLVM 23.** LLVM 23 changed the layout of the profile data records that tell which counters belong to which function. Rust nightlies from 2026-08-06 use it. There the crate cannot compute regions: the record gets a `coverage_error`, the output says `coverage: not measured: …` instead of showing zeros, and the chance of new code is counted in counters, ending with `(counted in counters: regions unavailable)`.
-- **Measure coverage in debug builds.** In an optimised build LLVM can merge or drop the counter updates of inlined code; a call of `clamp` with constant arguments raised no counter at all.
+- **Measure coverage in debug builds** (the default for `cargo test` and `cargo llvm-cov`). In an optimised build LLVM can merge or drop the counter updates of inlined code; a call of `clamp` with constant arguments raised no counter at all.
 - **One test at a time.** LLVM's counters are shared by the whole process. Tests using this crate take turns through one lock, but other tests running at the same time would mix in. Use `--test-threads=1`, or `cargo nextest`.
 - **`fork = true`** runs test cases in child processes, whose records are lost.
 - **Other entry points are not covered.** `#[property_test]`, test-strategy's `#[proptest]` and `prop_state_machine!` do not go through this crate's macro.
@@ -261,6 +266,7 @@ With coverage on, a debug build spends 0.02–0.40 ms more per test case, mostly
 ```bash
 cargo test -- --test-threads=1
 RUSTFLAGS="-C instrument-coverage" cargo test --features coverage -- --test-threads=1
+cargo llvm-cov --no-report --features coverage -- --test-threads=1
 ```
 
 ## License
