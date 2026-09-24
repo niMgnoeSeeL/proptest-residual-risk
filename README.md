@@ -245,7 +245,7 @@ Where the time goes with `RUSTFLAGS`: for the 8 crates whose tests build unoptim
 - **Rust:** 1.86 or newer (`rust-version = "1.86"`).
 - **Coverage:** LLVM 19–22, which is stable rustc 1.86–1.98.
 - **proptest:** 1.10 and 1.11 (`>=1.10, <1.12`). The macro relies on proptest's hidden `proptest_helper!`, so each new proptest release is checked before the range is widened.
-- **Checked on** macOS arm64 with rustc 1.86.0 (LLVM 19), 1.87.0 (LLVM 20) and 1.98.1 (LLVM 22), proptest 1.10.0 and 1.11.0, and the lowest versions of `object`, `miniz_oxide` and `md5` that `Cargo.toml` allows. Linux (ELF binaries) is supported by the code but has not been tested yet.
+- **Checked on** macOS arm64 with rustc 1.86.0 (LLVM 19), 1.87.0 (LLVM 20) and 1.98.1 (LLVM 22), proptest 1.10.0 and 1.11.0, and the lowest versions of `object`, `miniz_oxide` and `md5` that `Cargo.toml` allows. CI runs the tests, with and without coverage, on Linux (ubuntu-latest) and macOS with stable Rust, and with Rust 1.86 on Linux.
 
 ## Known limitations
 
