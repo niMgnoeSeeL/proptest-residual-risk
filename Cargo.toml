@@ -1,0 +1,35 @@
+[package]
+name = "proptest-residual-risk"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.86"
+license = "MIT OR Apache-2.0"
+description = "How much a passing proptest has shown: coverage, the chance of new code, and a 95% upper bound on the failure probability"
+readme = "README.md"
+keywords = ["proptest", "property-testing", "coverage", "testing", "risk"]
+categories = ["development-tools::testing"]
+include = ["src/**/*.rs", "tests/**/*.rs", "Cargo.toml", "README.md", "CHANGELOG.md", "LICENSE-MIT", "LICENSE-APACHE"]
+repository = "https://github.com/niMgnoeSeeL/proptest-residual-risk"
+# Not on crates.io yet.
+publish = false
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+# Per-test-case coverage from LLVM's coverage counters and the coverage mapping in the test
+# binary. Needs RUSTFLAGS="-C instrument-coverage".
+coverage = ["dep:object", "dep:miniz_oxide", "dep:md5"]
+
+[dependencies]
+# The macro hands parsing to proptest's `proptest_helper!` (hidden from proptest's documentation),
+# so the supported proptest versions are pinned; each new release is checked before widening this.
+proptest = ">=1.10, <1.12"
+# Reading the coverage mapping out of the test binary (Mach-O or ELF), its zlib-compressed
+# filenames, and the MD5 that links a function to its filenames.
+object = { version = "0.36", optional = true, default-features = false, features = ["read", "std", "compression"] }
+miniz_oxide = { version = "0.8", optional = true }
+md5 = { version = "0.7", optional = true }
+
+[dev-dependencies]
+proptest = ">=1.10, <1.12"
