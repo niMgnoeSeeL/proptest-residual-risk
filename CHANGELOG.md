@@ -8,3 +8,5 @@
 - The numbers are computed in an array indexed by region or counter, not a hash map: in debug builds the time after a campaign of 5,256 test cases fell from 0.003–2.5 s to 0.001–0.18 s on eleven real crates.
 - `RESIDUAL_RISK_COVERAGE_EVERY=k` takes coverage for every k-th test case only; the record gives `coverage_every` and `n_coverage`.
 - The record gives `mapping_s`, the time to read the coverage mapping, and `compute_s`, the time to compute the numbers after the run.
+- By default only this crate's own `src/` is left out of the code under test, not everything under its directory.
+- A demo crate (`demo/`), the README's terminal recording (`demo/demo.tape`, `assets/`), and CI on Linux and macOS.

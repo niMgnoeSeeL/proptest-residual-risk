@@ -1,20 +1,54 @@
-# proptest-residual-risk
+<p align="center">
+  <img src="assets/demo.gif" alt="A terminal: cargo test prints only ok; with RESIDUAL_RISK=1 the passing test also reports coverage, the chance of new code and a failure bound" width="820">
+</p>
 
-When a [proptest](https://github.com/proptest-rs/proptest) test passes, `cargo test` prints `ok` and nothing else. You learn that 256 test cases found no counterexample. You do not learn whether 256 was enough, how much of your code those test cases reached, or what `PROPTEST_CASES` should be.
+<h1 align="center">proptest-residual-risk</h1>
 
-This crate adds that information to every passing test, without changing how proptest generates or runs test cases. For each test it reports three numbers:
+<p align="center"><b>How much has a passing <a href="https://github.com/proptest-rs/proptest">proptest</a> shown?</b> Coverage, the chance of new code, and a 95% failure bound for every passing test.</p>
 
-1. **Coverage:** how much of the code under test the passing test cases ran, counted in LLVM coverage regions.
-2. **Chance of new code:** an estimate of the chance that the next test case runs code that no test case has run yet, and how many more test cases that is expected to take.
-3. **Failure bound:** a 95% upper bound on the chance that the next test case fails, and how many passing test cases in total would bring it below a target you choose.
+<p align="center">
+  <a href="https://github.com/niMgnoeSeeL/proptest-residual-risk/actions/workflows/ci.yml"><img src="https://github.com/niMgnoeSeeL/proptest-residual-risk/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="License: MIT OR Apache-2.0">
+  <img src="https://img.shields.io/badge/rust-1.86%2B-orange" alt="Rust 1.86 or newer">
+  <img src="https://img.shields.io/badge/proptest-1.10%20%7C%201.11-green" alt="proptest 1.10 and 1.11">
+</p>
 
-The failure bound needs nothing but the crate. Coverage and the chance of new code need a coverage build (`-C instrument-coverage`) and the crate's `coverage` feature.
+When a proptest test passes, `cargo test` prints `ok` and nothing else: 256 test cases found no counterexample, but was 256 enough? This crate answers that for every passing test, without changing how proptest generates or runs test cases.
 
-> **Status.** Version 0.1.0, not yet published on crates.io. The code, tests and this document were written with the help of an AI assistant (Claude, by Anthropic). Every number in this document was measured with this crate; how is described under [Evidence](#evidence).
+| Number | What it answers | Needs |
+| --- | --- | --- |
+| **Failure bound** | At most how likely is the next test case to fail? (95% upper bound, e.g. `at most 0.012`) And how many test cases would bring it below a target? | Nothing |
+| **Coverage** | How much of the code under test did the passing test cases run? (LLVM regions, e.g. `9 of 12 regions`) | A coverage build |
+| **Chance of new code** | How likely is the next test case to run code no test case has run yet? (estimate, e.g. `about 0.0039`) | A coverage build |
+
+> Version 0.1.0, not yet on crates.io. Written with the help of an AI assistant (Claude, by Anthropic); every number in this document was measured with this crate ([Evidence](#evidence)).
+
+## Quick start
+
+```toml
+# Cargo.toml
+[dev-dependencies]
+proptest-residual-risk = { git = "https://github.com/niMgnoeSeeL/proptest-residual-risk" }
+```
+
+```rust
+use proptest::prelude::*;
+use proptest_residual_risk::proptest; // replaces proptest's macro; tests stay as they are
+```
+
+```console
+$ RESIDUAL_RISK=1 cargo test -- --nocapture
+proptest: 256 passing test cases
+	...
+	failure: at most 0.012 chance per test case (95% confidence)
+	         below 0.001 after 2,739 more (~0.181 s): PROPTEST_CASES=2995
+```
+
+For coverage and the chance of new code, see [Coverage and the chance of new code](#coverage-and-the-chance-of-new-code).
 
 ## Contents
 
-- [Quick start](#quick-start)
+- [Coverage and the chance of new code](#coverage-and-the-chance-of-new-code)
 - [What the output means](#what-the-output-means)
 - [The three numbers](#the-three-numbers)
 - [What the numbers do not say](#what-the-numbers-do-not-say)
@@ -28,79 +62,48 @@ The failure bound needs nothing but the crate. Coverage and the chance of new co
 - [License](#license)
 - [References](#references)
 
-## Quick start
+## Coverage and the chance of new code
 
-Add the crate next to proptest as a dev-dependency. Until it is on crates.io, take it from this repository:
+Turn on the `coverage` feature and run the tests in a coverage build, one test at a time:
 
 ```toml
 [dev-dependencies]
-proptest = "1.11"
-proptest-residual-risk = { git = "https://github.com/niMgnoeSeeL/proptest-residual-risk" }
-```
-
-To also get coverage and the chance of new code, turn on the `coverage` feature:
-
-```toml
 proptest-residual-risk = { git = "https://github.com/niMgnoeSeeL/proptest-residual-risk", features = ["coverage"] }
 ```
 
-In each test file, add one `use` line after proptest's prelude. It replaces proptest's `proptest!` macro with this crate's, which accepts exactly the same syntax. The tests stay as they are.
-
-```rust
-use proptest::prelude::*;
-use proptest_residual_risk::proptest;
-
-proptest! {
-    #[test]
-    fn clamp_in_range(x: i64, lo: i64, hi: i64) {
-        prop_assume!(lo <= hi);
-        let y = my_crate::clamp(x, lo, hi);
-        prop_assert!(lo <= y && y <= hi);
-    }
-}
-```
-
-Run the tests. `RESIDUAL_RISK=1` prints the numbers; `--show-output` makes `cargo test` show the output of passing tests.
-
 ```bash
-# the failure bound only; any build
-RESIDUAL_RISK=1 cargo test -- --show-output
-
-# all three numbers (recommended): under cargo-llvm-cov, one test at a time
 cargo install cargo-llvm-cov   # once
-RESIDUAL_RISK=1 cargo llvm-cov --no-report -- --test-threads=1 --show-output
-
-# all three numbers without cargo-llvm-cov: instruments every crate, dependencies included
-RUSTFLAGS="-C instrument-coverage" RESIDUAL_RISK=1 \
-  cargo test -- --test-threads=1 --show-output
+RESIDUAL_RISK=1 cargo llvm-cov --no-report -- --test-threads=1 --nocapture
 ```
 
-[cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) instruments only your workspace's own crates, not dependencies such as proptest. The numbers are the same, and it is cheaper: on 11 real crates, 2.25× the time of plain proptest against 3.42× with `RUSTFLAGS` (geometric means; see [Evidence](#evidence)). Drop `--no-report` to also get cargo-llvm-cov's usual coverage report. With `cargo nextest` (`cargo llvm-cov nextest`), which runs every test in its own process, `--test-threads=1` is not needed. Without `RESIDUAL_RISK=1` nothing is printed, but every test still appends one line to a record file ([The record file](#the-record-file)).
+[cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov) instruments only your workspace's own crates, not dependencies such as proptest. On 11 real crates this cost 2.25× the time of plain proptest, against 3.42× when every crate is instrumented with `RUSTFLAGS="-C instrument-coverage" cargo test`, which also works. Drop `--no-report` to also get cargo-llvm-cov's usual coverage report. With `cargo llvm-cov nextest`, which runs every test in its own process, `--test-threads=1` is not needed.
 
 ## What the output means
 
-This is real output for the test above. The code under test is a small library whose `src/lib.rs` holds two functions, `clamp` (the one the test calls) and `mean` (which it does not call). proptest 1.11.0, rustc 1.98.1, debug build, macOS.
+This is the last step of the recording above: the crate's own [demo](demo/), a library with two functions, `clamp` (which the test calls) and `mean` (which it does not), and one proptest in `src/lib.rs`. proptest 1.11.0, rustc 1.98.1, cargo-llvm-cov 0.9.1, macOS.
 
 ```text
----- clamp_in_range stdout ----
 proptest: 256 passing test cases
 	successes: 256
 	local rejects: 0
-	global rejects: 294
-		294 times at tests/with_crate.rs:9:9: lo <= hi
-	coverage: 9 of 15 regions (60%) in the code under test, 3 counters
-	new code: about 0.0039 chance per test case (next new code after ~258 more, ~0.047 s)
+	global rejects: 268
+		268 times at src/lib.rs:28:13: lo <= hi
+	coverage: 9 of 12 regions (75%) in the code under test, 3 counters
+	new code: about 0.0039 chance per test case (next new code after ~258 more, ~0.017 s)
 	failure: at most 0.012 chance per test case (95% confidence)
-	         below 0.001 after 2,739 more (~0.500 s): PROPTEST_CASES=2995
+	         below 0.001 after 2,739 more (~0.181 s): PROPTEST_CASES=2995
+test tests::clamp_in_range ... ok
 ```
 
 Line by line:
 
-- `256 passing test cases`, `successes: 256`, `local rejects`, `global rejects`: the same statistics block that proptest itself prints when a test fails. $n = 256$ is the number of newly generated test cases that passed. The 294 global rejects are inputs that `prop_assume!(lo <= hi)` discarded; they are not counted in $n$.
-- `coverage: 9 of 15 regions (60%) in the code under test, 3 counters`: the library has 15 coverage regions (source ranges the compiler tracks). The 256 test cases ran 9 of them: all of `clamp`, none of `mean`. `3 counters` is the number of LLVM counters that went up; there are fewer counters than regions because LLVM computes some regions' counts from other counters (see [Coverage](#coverage)).
-- `new code: about 0.0039 chance per test case`: the estimated chance that test case 257 runs a region none of the 256 ran. Here no region was run by exactly one test case, so the estimate is at its floor $1/(n+2) = 1/258$. `next new code after ~258 more` is $1/0.0039$, and `~0.047 s` is that many test cases at this test's average time per test case.
+- `256 passing test cases`, `successes: 256`, `local rejects`, `global rejects`: the same statistics block that proptest itself prints when a test fails. $n = 256$ is the number of newly generated test cases that passed. The 268 global rejects are inputs that `prop_assume!(lo <= hi)` discarded; they are not counted in $n$.
+- `coverage: 9 of 12 regions (75%) in the code under test, 3 counters`: the library has 12 coverage regions (source ranges the compiler tracks). The 256 test cases ran 9 of them: all of `clamp`, none of `mean`. `3 counters` is the number of LLVM counters that went up; there are fewer counters than regions because LLVM computes some regions' counts from other counters (see [Coverage](#coverage)).
+- `new code: about 0.0039 chance per test case`: the estimated chance that test case 257 runs a region none of the 256 ran. Here no region was run by exactly one test case, so the estimate is at its floor $1/(n+2) = 1/258$. `next new code after ~258 more` is $1/0.0039$, and `~0.017 s` is that many test cases at this test's average time per test case.
 - `failure: at most 0.012 chance per test case (95% confidence)`: the 95% upper bound $1 - 0.05^{1/256} = 0.0116$ on the chance that one more test case from this strategy fails.
-- `below 0.001 after 2,739 more (~0.500 s): PROPTEST_CASES=2995`: to bring that bound below 0.001 (the default target), 2,995 passing test cases are needed in total, 2,739 more than now, which at this test's speed takes about half a second. The crate only reports this; it never runs more test cases than `cases`.
+- `below 0.001 after 2,739 more (~0.181 s): PROPTEST_CASES=2995`: to bring that bound below 0.001 (the default target), 2,995 passing test cases are needed in total, 2,739 more than now. The crate only reports this; it never runs more test cases than `cases`.
+
+The recording is made with [vhs](https://github.com/charmbracelet/vhs) from [demo/demo.tape](demo/demo.tape).
 
 ## The three numbers
 
@@ -189,16 +192,16 @@ All settings are environment variables. Their names start with `RESIDUAL_RISK`, 
 
 | Variable | Meaning | Default |
 | --- | --- | --- |
-| `RESIDUAL_RISK=1` | Print the numbers to each test's output (`cargo test -- --show-output` shows it) | off |
+| `RESIDUAL_RISK=1` | Print the numbers to each test's output (shown with `cargo test -- --nocapture` or `--show-output`) | off |
 | `RESIDUAL_RISK_TARGET` | The failure probability for which the needed number of test cases is computed | `0.001` |
 | `RESIDUAL_RISK_DIR` | Where the record files go | `<target>/<profile>/proptest-residual-risk/` |
 | `RESIDUAL_RISK_CODE` | The code under test: comma-separated path prefixes; a prefix starting with `!` excludes (e.g. `src/,!src/bin/`) | see [Coverage](#coverage) |
 | `RESIDUAL_RISK_TRACE=1` | Also write, for each passing test case, the counters and regions it ran (for checking the estimate) | off |
-| `RESIDUAL_RISK_COVERAGE_EVERY` | Take coverage for every k-th generated test case only; the chance of new code is then computed from those test cases, so it describes fewer test cases and reads higher. The failure bound still uses all of them. On 11 crates, k = 4 cost 2.44× and k = 16 cost 2.15× of plain proptest, against 3.42× for k = 1 (all with `RUSTFLAGS`) | `1` |
+| `RESIDUAL_RISK_COVERAGE_EVERY` | Take coverage for every k-th generated test case only; the chance of new code is then computed from those test cases, so it describes fewer test cases and reads higher. The failure bound still uses all of them | `1` |
 
 ## The record file
 
-Every test run appends one JSON line to `<test name>.jsonl` in the records directory, whether or not `RESIDUAL_RISK=1` is set. The main fields:
+Every test run appends one JSON line to `<test name>.jsonl` in the records directory (`RESIDUAL_RISK_DIR`), whether or not `RESIDUAL_RISK=1` is set: without it nothing is printed, but the record is still written. The main fields:
 
 | Field | Meaning |
 | --- | --- |
@@ -233,7 +236,7 @@ All measurements below were made with this crate, proptest 1.11.0 and rustc 1.98
 | Coverage on, with `RUSTFLAGS="-C instrument-coverage"` (every crate instrumented) | 3.42× (1.10–28.39×) |
 | For comparison: plain proptest under `cargo llvm-cov`, test run only / with its report | 1.08× (0.99–1.46×) / 2.70× (1.07–68.75×) |
 
-Where the time goes with `RUSTFLAGS`: for the 8 crates whose tests build unoptimised, instrumentation itself costs almost nothing and most of the extra time is reading and comparing the counters of the code under test before and after each test case (0.05–3.55× of plain proptest). For the 3 crates whose manifests build tests at opt-level 3, instrumenting proptest and the other dependencies blocks optimisation (2.7–20× of plain); under cargo-llvm-cov, which leaves dependencies uninstrumented, these fall from 28.4× to 3.1× (base64), 17.6× to 7.1× (regex-syntax) and 10.1× to 4.3× (regex), with the same regions counted. Reading the coverage mapping takes 0.009–0.07 s once per process, and computing the numbers after a campaign of 5,256 test cases 0.001–0.18 s. Building tests in release mode does not help: relative to plain proptest in release mode, coverage costs 16.7× and optimisation drops some counter updates.
+Where the time goes with `RUSTFLAGS`: for the 8 crates whose tests build unoptimised, instrumentation itself costs almost nothing and most of the extra time is reading and comparing the counters of the code under test before and after each test case (0.05–3.55× of plain proptest). For the 3 crates whose manifests build tests at opt-level 3, instrumenting proptest and the other dependencies blocks optimisation (2.7–20× of plain); under cargo-llvm-cov, which leaves dependencies uninstrumented, these fall from 28.4× to 3.1× (base64), 17.6× to 7.1× (regex-syntax) and 10.1× to 4.3× (regex), with the same regions counted. Reading the coverage mapping takes 0.009–0.07 s once per process, and computing the numbers after a campaign of 5,256 test cases 0.001–0.18 s. Taking coverage for every 4th or 16th test case only (`RESIDUAL_RISK_COVERAGE_EVERY`) costs 2.44× or 2.15× with `RUSTFLAGS`, against 3.42×. Building tests in release mode does not help: relative to plain proptest in release mode, coverage costs 16.7× and optimisation drops some counter updates.
 
 **Optimised builds gave the same numbers here.** Three of the crates build their tests at opt-level 3. Rerunning them in debug builds (160 campaigns) gave the same estimates and observed fractions in every campaign, although the debug builds saw up to 7% more regions.
 
@@ -267,6 +270,7 @@ Where the time goes with `RUSTFLAGS`: for the 8 crates whose tests build unoptim
 cargo test -- --test-threads=1
 RUSTFLAGS="-C instrument-coverage" cargo test --features coverage -- --test-threads=1
 cargo llvm-cov --no-report --features coverage -- --test-threads=1
+cd demo && cargo llvm-cov --no-report --features coverage -- --nocapture
 ```
 
 ## License

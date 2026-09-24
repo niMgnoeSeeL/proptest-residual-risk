@@ -1,0 +1,16 @@
+[package]
+name = "demo"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Not part of the parent crate's workspace.
+[workspace]
+
+[features]
+# Coverage and the chance of new code; needs an instrumented build (cargo llvm-cov).
+coverage = ["proptest-residual-risk/coverage"]
+
+[dev-dependencies]
+proptest = "1.11"
+proptest-residual-risk = { path = ".." }

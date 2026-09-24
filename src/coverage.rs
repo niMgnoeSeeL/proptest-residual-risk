@@ -125,7 +125,8 @@ mod imp {
             return include.clone().any(|p| path.starts_with(p.as_str()))
                 && !exclude.into_iter().any(|p| path.starts_with(p));
         }
-        let own = env!("CARGO_MANIFEST_DIR");
+        // This crate's own source, not anything else under its directory (such as its demo).
+        let own = concat!(env!("CARGO_MANIFEST_DIR"), "/src/");
         let skip_dir = path
             .split('/')
             .any(|c| c == "tests" || c == "benches" || c == "examples");
@@ -352,6 +353,37 @@ mod imp {
     }
 
     pub const ON: bool = true;
+
+    #[cfg(test)]
+    mod tests {
+        use super::in_code_under_test;
+
+        #[test]
+        fn default_rule() {
+            let own = env!("CARGO_MANIFEST_DIR");
+            // This crate's source is left out, but not other code under its directory.
+            assert!(!in_code_under_test(&format!("{own}/src/lib.rs"), &None));
+            assert!(in_code_under_test(&format!("{own}/demo/src/lib.rs"), &None));
+            assert!(in_code_under_test("/home/u/project/src/lib.rs", &None));
+            assert!(!in_code_under_test("/home/u/project/tests/t.rs", &None));
+            assert!(!in_code_under_test(
+                "/home/u/.cargo/registry/src/index/proptest-1.11.0/src/lib.rs",
+                &None
+            ));
+            assert!(!in_code_under_test(
+                "/rustc/abc/library/core/src/lib.rs",
+                &None
+            ));
+        }
+
+        #[test]
+        fn prefixes() {
+            let p = Some(vec!["/p/src/".to_string(), "!/p/src/bin/".to_string()]);
+            assert!(in_code_under_test("/p/src/lib.rs", &p));
+            assert!(!in_code_under_test("/p/src/bin/main.rs", &p));
+            assert!(!in_code_under_test("/q/src/lib.rs", &p));
+        }
+    }
 }
 
 #[cfg(not(feature = "coverage"))]

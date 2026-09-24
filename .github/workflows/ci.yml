@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - name: tests without coverage
+        run: cargo test -- --test-threads=1
+      - name: tests with coverage, every crate instrumented
+        run: cargo test --features coverage -- --test-threads=1
+        env:
+          RUSTFLAGS: -C instrument-coverage
+      - name: tests with coverage, under cargo-llvm-cov
+        run: cargo llvm-cov --no-report --features coverage -- --test-threads=1
+      - name: demo
+        working-directory: demo
+        run: |
+          RESIDUAL_RISK=1 cargo test -- --nocapture
+          RESIDUAL_RISK=1 cargo llvm-cov --no-report --features coverage -- --nocapture
+
+  msrv:
+    name: minimum Rust version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.86
+      - name: tests without coverage
+        run: cargo test -- --test-threads=1
+      - name: tests with coverage
+        run: cargo test --features coverage -- --test-threads=1
+        env:
+          RUSTFLAGS: -C instrument-coverage
