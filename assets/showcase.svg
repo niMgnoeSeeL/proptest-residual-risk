@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1066" height="314" viewBox="0 0 1066 314">
+<style>.m{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px} .t{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;fill:#57606a}</style>
+<g transform="translate(0,0)">
+<text x="0" y="22" class="t">proptest</text>
+<rect x="0" y="34" width="289" height="272" rx="8" fill="#0d1117"/>
+<rect x="0" y="34" width="289" height="22" rx="8" fill="#161b22"/>
+<rect x="0" y="48" width="289" height="8" fill="#161b22"/>
+<circle cx="14" cy="45" r="5" fill="#ff5f56"/>
+<circle cx="30" cy="45" r="5" fill="#ffbd2e"/>
+<circle cx="46" cy="45" r="5" fill="#27c93f"/>
+<text x="16" y="78" class="m" xml:space="preserve"><tspan fill="#7ee787">$ </tspan><tspan fill="#e6edf3">cargo test</tspan></text>
+<text x="16" y="103" class="m" fill="#e6edf3" xml:space="preserve">test tests::clamp_in_range ... ok</text>
+</g>
+<g transform="translate(313,0)">
+<text x="0" y="22" class="t">with proptest-residual-risk</text>
+<rect x="0" y="34" width="753" height="272" rx="8" fill="#0d1117"/>
+<rect x="0" y="34" width="753" height="22" rx="8" fill="#161b22"/>
+<rect x="0" y="48" width="753" height="8" fill="#161b22"/>
+<circle cx="14" cy="45" r="5" fill="#ff5f56"/>
+<circle cx="30" cy="45" r="5" fill="#ffbd2e"/>
+<circle cx="46" cy="45" r="5" fill="#27c93f"/>
+<text x="16" y="78" class="m" xml:space="preserve"><tspan fill="#7ee787">$ </tspan><tspan fill="#e6edf3">RESIDUAL_RISK=1 cargo llvm-cov --no-report \</tspan></text>
+<text x="16" y="97" class="m" xml:space="preserve"><tspan fill="#7ee787">  </tspan><tspan fill="#e6edf3">  --features coverage -- --nocapture</tspan></text>
+<text x="16" y="122" class="m" fill="#e6edf3" xml:space="preserve">proptest: 256 passing test cases</text>
+<text x="16" y="141" class="m" fill="#e6edf3" xml:space="preserve">    successes: 256</text>
+<text x="16" y="160" class="m" fill="#e6edf3" xml:space="preserve">    local rejects: 0</text>
+<text x="16" y="179" class="m" fill="#e6edf3" xml:space="preserve">    global rejects: 245</text>
+<text x="16" y="198" class="m" fill="#e6edf3" xml:space="preserve">        245 times at src/lib.rs:28:13: lo &lt;= hi</text>
+<text x="16" y="217" class="m" fill="#79c0ff" font-weight="bold" xml:space="preserve">    coverage: 9 of 12 regions (75%) in the code under test, 3 counters</text>
+<text x="16" y="236" class="m" fill="#e3b341" font-weight="bold" xml:space="preserve">    new code: about 0.0039 chance per test case (next new code after ~258 more, ~0.017 s)</text>
+<text x="16" y="255" class="m" fill="#56d364" font-weight="bold" xml:space="preserve">    failure: at most 0.012 chance per test case (95% confidence)</text>
+<text x="16" y="274" class="m" fill="#56d364" font-weight="bold" xml:space="preserve">             below 0.001 after 2,739 more (~0.176 s): PROPTEST_CASES=2995</text>
+<text x="16" y="293" class="m" fill="#e6edf3" xml:space="preserve">test tests::clamp_in_range ... ok</text>
+</g>
+</svg>

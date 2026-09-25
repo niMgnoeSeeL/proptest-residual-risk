@@ -10,3 +10,4 @@
 - The record gives `mapping_s`, the time to read the coverage mapping, and `compute_s`, the time to compute the numbers after the run.
 - By default only this crate's own `src/` is left out of the code under test, not everything under its directory.
 - A demo crate (`demo/`), the README's terminal recording (`demo/demo.tape`, `assets/`), and CI on Linux and macOS.
+- Documentation split into a short README and `docs/theory.md`, `docs/evidence.md` (with figures) and `docs/reference.md`; the README opens with the demo's output without and with the crate, side by side (`demo/make_showcase.py`).
