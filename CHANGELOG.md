@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 (2026-09-25)
+
+- The usage example at the top of the documentation is now a complete example that the doc tests compile and run, instead of an untested snippet.
+
 ## 0.1.0 (2026-09-25)
 
 - `proptest!` accepting all twelve forms of proptest's macro; parsing is handed to proptest's `proptest_helper!`, so proptest is pinned to `>=1.10, <1.12`.

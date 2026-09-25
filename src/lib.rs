@@ -2,9 +2,24 @@
 //!
 //! Replace proptest's macro with this crate's, and nothing else changes:
 //!
-//! ```ignore
+//! ```
 //! use proptest::prelude::*;
-//! use proptest_residual_risk::proptest;
+//! use proptest_residual_risk::proptest; // the only new line
+//!
+//! fn clamp(x: i64, lo: i64, hi: i64) -> i64 {
+//!     x.max(lo).min(hi)
+//! }
+//!
+//! proptest! {
+//!     // In a test file this function would carry `#[test]`.
+//!     fn clamp_in_range(x: i64, lo: i64, hi: i64) {
+//!         prop_assume!(lo <= hi);
+//!         let y = clamp(x, lo, hi);
+//!         prop_assert!(lo <= y && y <= hi);
+//!     }
+//! }
+//!
+//! clamp_in_range(); // with RESIDUAL_RISK=1 the numbers are printed
 //! ```
 //!
 //! For each test, the crate records every test case the runner newly generates: whether it
