@@ -67,10 +67,10 @@ The right-hand side of the picture above, line by line:
 
 | Line | Meaning |
 | --- | --- |
-| `256 passing test cases`, `successes`, `rejects` | The statistics block proptest prints when a test fails, now also for passing tests. $n = 256$ counts only newly generated test cases that passed; inputs discarded by `prop_assume!` are the rejects. |
+| `256 passing test cases`, `successes`, `rejects` | The statistics block proptest prints when a test fails, now also for passing tests. n = 256 counts only newly generated test cases that passed; inputs discarded by `prop_assume!` are the rejects. |
 | `coverage: 9 of 12 regions (75%)` | The code under test has 12 coverage regions (source ranges the compiler tracks); the 256 test cases ran 9 of them. `3 counters` is how many LLVM counters went up. |
-| `new code: about 0.0039 chance per test case` | Estimated chance that test case 257 runs a region none of the 256 ran; `~258 more` is $1/0.0039$, and `~0.017 s` is that many test cases at this test's speed. **"about"** means an estimate, not a bound. |
-| `failure: at most 0.012 chance per test case (95% confidence)` | Upper bound $1 - 0.05^{1/n}$ on the chance that one more test case from this strategy fails. **"95% confidence"** means: over many passing tests, at most about 5% of these bounds are below their test's true failure probability. It does not mean this one bound is right with probability 0.95. |
+| `new code: about 0.0039 chance per test case` | Estimated chance that test case 257 runs a region none of the 256 ran; `~258 more` is 1 / 0.0039, and `~0.017 s` is that many test cases at this test's speed. **"about"** means an estimate, not a bound. |
+| `failure: at most 0.012 chance per test case (95% confidence)` | Upper bound 1 − 0.05<sup>1/n</sup> on the chance that one more test case from this strategy fails. **"95% confidence"** means: over many passing tests, at most about 5% of these bounds are below their test's true failure probability. It does not mean this one bound is right with probability 0.95. |
 | `below 0.001 after 2,739 more: PROPTEST_CASES=2995` | Passing test cases needed in total to bring the bound below 0.001 (the target is set with `RESIDUAL_RISK_TARGET`). The crate only reports this; it never runs more test cases than `cases`. |
 
 ## Caveats
