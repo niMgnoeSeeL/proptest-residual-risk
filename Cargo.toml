@@ -10,8 +10,7 @@ keywords = ["proptest", "property-testing", "coverage", "testing", "risk"]
 categories = ["development-tools::testing"]
 include = ["src/**/*.rs", "tests/**/*.rs", "Cargo.toml", "README.md", "CHANGELOG.md", "LICENSE-MIT", "LICENSE-APACHE"]
 repository = "https://github.com/niMgnoeSeeL/proptest-residual-risk"
-# Not on crates.io yet.
-publish = false
+documentation = "https://docs.rs/proptest-residual-risk"
 
 [package.metadata.docs.rs]
 all-features = true

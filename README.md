@@ -23,14 +23,14 @@ When a proptest test passes, `cargo test` prints `ok` and nothing else. 256 test
 
 How each number is defined, and what it assumes: [docs/theory.md](docs/theory.md).
 
-> Version 0.1.0, not yet on crates.io. Written with the help of an AI assistant (Claude, by Anthropic). Every number here was measured with this crate: [docs/evidence.md](docs/evidence.md).
+> Written with the help of an AI assistant (Claude, by Anthropic). Every number here was measured with this crate: [docs/evidence.md](docs/evidence.md).
 
 ## Quick start
 
 ```toml
 # Cargo.toml
 [dev-dependencies]
-proptest-residual-risk = { git = "https://github.com/niMgnoeSeeL/proptest-residual-risk" }
+proptest-residual-risk = "0.1"
 ```
 
 ```rust
@@ -51,7 +51,7 @@ proptest: 256 passing test cases
 Turn on the `coverage` feature and run the tests under [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov), one test at a time:
 
 ```toml
-proptest-residual-risk = { git = "https://github.com/niMgnoeSeeL/proptest-residual-risk", features = ["coverage"] }
+proptest-residual-risk = { version = "0.1", features = ["coverage"] }
 ```
 
 ```bash

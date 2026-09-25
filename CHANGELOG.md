@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-09-25)
 
 - `proptest!` accepting all twelve forms of proptest's macro; parsing is handed to proptest's `proptest_helper!`, so proptest is pinned to `>=1.10, <1.12`.
 - For each passing test: the 95% upper bound on the failure probability and the passing test cases needed to bring it below a target; with the `coverage` feature, the regions of the code under test the test cases ran and the chance that the next test case runs a region none has run.
