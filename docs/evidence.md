@@ -18,7 +18,7 @@ A *campaign* is one run of one test: its test cases until it passes (or fails).
 
 - The bound can only be wrong when a campaign passes although the test can fail, and only when the test passes with a chance below 0.05: then the bound after $n$ passing test cases is below the true failure probability. In the group where tests pass with chance 0.049, 383 of 8,400 campaigns (0.0456, 95% interval 0.0412–0.0503) passed with a bound below the true failure probability: within the promised 5%.
 - In the groups with chance 0.2 and 0.5 the bound cannot be below the truth, and it never was. These groups check that the crate counts $n$ correctly and that nothing else goes wrong.
-- The share of passing campaigns matched what independent draws predict in all 84 combinations (right), which is the assumption behind the bound ([theory](theory.md#independent-test-cases-both-numbers)).
+- The share of passing campaigns matched what independent draws predict in all 84 combinations (right), which is the assumption behind the bound ([theory](theory.md#independent-test-cases-the-failure-bound-and-the-chance-of-new-code)).
 - In all 25,200 campaigns the crate's $n$ equalled proptest's `successes`.
 
 <details>

@@ -76,7 +76,7 @@ The right-hand side of the picture above, line by line:
 ## Caveats
 
 > [!IMPORTANT]
-> - **Both numbers assume independent test cases.** They hold because proptest draws every test case afresh from the strategy, without mutating or steering by earlier ones. A proptest setting that changed this (such as the edge-bias proposal in proptest #515) would break them.
+> - **The failure bound and the chance of new code both assume that test cases are independent draws.** proptest meets this: it draws every test case afresh from the strategy, without mutating or steering by earlier ones. A proptest setting that changed this (such as the edge-bias proposal in proptest #515) would make both numbers invalid.
 > - **The chance of new code is an estimate, not a bound.** It is right on average, but in 18% of the campaigns we measured it was below the true rate.
 > - **The chance of new code does not bound the chance of failure.** A wrong result can come from code that every test case already ran. Use the failure bound for "how likely is a failure".
 > - **Everything is about the test's strategy**, not about the inputs your code meets in production. The failure bound is not the chance that your code has a bug.

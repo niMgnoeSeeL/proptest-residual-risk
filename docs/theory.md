@@ -81,11 +81,11 @@ fn clamp(x: i64, lo: i64, hi: i64) -> i64 {   // counter A: entry
 
 The third test case runs `x` for the first time, but raises only counter A, which was already seen. Counted in counters, it would not count as new code. On 57 real crates, counting regions found 14% more test cases that ran new code ([evidence](evidence.md#the-chance-of-new-code)).
 
-**The code under test.** Both counts are limited to it. By default it is every source file except dependencies (`~/.cargo/registry`, `~/.cargo/git`), the standard library, files under `tests/`, `benches/` and `examples/`, and this crate's own `src/`. `RESIDUAL_RISK_CODE` sets it explicitly ([reference](reference.md#configuration)).
+**The code under test.** Coverage and the chance of new code count only regions in the code under test. By default it is every source file except dependencies (`~/.cargo/registry`, `~/.cargo/git`), the standard library, files under `tests/`, `benches/` and `examples/`, and this crate's own `src/`. `RESIDUAL_RISK_CODE` sets it explicitly ([reference](reference.md#configuration)).
 
 ## Assumptions and caveats
 
-### Independent test cases (both numbers)
+### Independent test cases (the failure bound and the chance of new code)
 
 The failure bound and the chance of new code both treat the $n$ passing test cases as independent draws from one distribution. proptest meets this. Every test case starts from a fresh seed: `TestRunner::run_in_process_with_replay` calls `gen_get_seed` and then the strategy's `new_tree`. proptest does not mutate earlier inputs, avoid earlier inputs, or steer generation by coverage. So the passing test cases are independent draws from the strategy's distribution, restricted to inputs that pass `prop_assume!` and `prop_filter`.
 
