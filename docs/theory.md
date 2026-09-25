@@ -13,13 +13,13 @@ This page defines the three numbers the crate reports, and states what they assu
 
 ## Which test cases are counted
 
-All three numbers are computed from the test cases that proptest's runner newly generated and that passed. We write $n$ for their number. When a test passes, $n$ equals proptest's own `successes`; the record file says whether the two agree (`counts_agree`).
+All three numbers are computed from the test cases that proptest's runner newly generated and that passed. We write $n$ for their number. $n$ equals proptest's own `successes`, whether or not the test passed; the record file says whether the two agree (`counts_agree`).
 
 Not counted:
 
 - replays of persisted failures (`proptest-regressions` files), which the runner runs before any new test case;
 - test cases rejected by `prop_assume!`, and values redrawn by `prop_filter`;
-- shrinking, which only happens after a failure. When a test fails, nothing is estimated.
+- shrinking, which only happens after a failure, including the failure of a replayed seed. When a test fails, nothing is estimated.
 
 ## Failure bound
 

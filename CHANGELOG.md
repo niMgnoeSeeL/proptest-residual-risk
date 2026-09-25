@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 (2026-09-25)
+
+- Fixed: when a persisted failure was replayed and failed again, the runner's shrinking calls that passed were counted as new passing test cases in `n` (reported by a user). Only failing runs were affected; the numbers for passing tests were not.
+- `counts_agree` now compares `n` with proptest's `successes` whether or not the test passed, so a miscount like this one shows up.
+
 ## 0.1.1 (2026-09-25)
 
 - The usage example at the top of the documentation is now a complete example that the doc tests compile and run, instead of an untested snippet.

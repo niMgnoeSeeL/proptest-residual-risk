@@ -127,13 +127,25 @@ pub mod __private {
         /// Runs one test case's body and records it. After the first failing test case the
         /// runner is shrinking: those calls are passed through unrecorded.
         pub fn observe(&self, body: impl FnOnce() -> TestCaseResult) -> TestCaseResult {
-            let skip = {
+            let (replay, after_failure) = {
                 let mut st = self.state.borrow_mut();
                 st.calls += 1;
-                st.calls <= self.replays || st.failed
+                (st.calls <= self.replays, st.failed)
             };
-            if skip {
+            if after_failure {
                 return body();
+            }
+            if replay {
+                // Not a new test case, so not recorded. But if the replay fails again, the runner
+                // shrinks it next, and those calls must not be recorded either.
+                let result = catch_unwind(AssertUnwindSafe(body));
+                if !matches!(result, Ok(Ok(())) | Ok(Err(TestCaseError::Reject(_)))) {
+                    self.state.borrow_mut().failed = true;
+                }
+                return match result {
+                    Ok(r) => r,
+                    Err(panic) => resume_unwind(panic),
+                };
             }
             let measured = self.state.borrow().cases.len() % coverage_every() == 0;
             let start = Instant::now();
@@ -209,7 +221,9 @@ pub mod __private {
                 0.0
             };
             let body_time: f64 = st.cases.iter().map(|c| c.time.as_secs_f64()).sum();
-            let consistent = !passed || successes == Some(n);
+            // The runner's `successes` counts new passing test cases whether or not the test
+            // passed overall, so the two counts must agree either way.
+            let consistent = successes.is_none_or(|s| s == n);
 
             let mut json = String::new();
             let now = SystemTime::now()
