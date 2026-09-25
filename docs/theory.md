@@ -101,7 +101,7 @@ It is right on average, but in a single run it can be below the truth. On 57 rea
 
 ### The chance of new code does not bound the chance of failure
 
-A wrong result can come from code that every test case already ran:
+The chance that the next test case fails can be higher than the chance that it runs new code. Here the defect is in a branch no passing test case ran, yet the chance of new code reads lower than the true failure probability:
 
 ```rust
 // defect: wrong result when a == 7

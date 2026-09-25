@@ -78,7 +78,7 @@ The right-hand side of the picture above, line by line:
 > [!IMPORTANT]
 > - **The failure bound and the chance of new code both assume that test cases are independent draws.** proptest meets this: it draws every test case afresh from the strategy, without mutating or steering by earlier ones. A proptest setting that changed this (such as the edge-bias proposal in proptest #515) would make both numbers invalid.
 > - **The chance of new code is an estimate, not a bound.** It is right on average, but in 18% of the campaigns we measured it was below the true rate.
-> - **The chance of new code does not bound the chance of failure.** A wrong result can come from code that every test case already ran. Use the failure bound for "how likely is a failure".
+> - **The chance of new code does not bound the chance of failure.** The next test case can be more likely to fail than to run new code; in the example on the theory page they are 0.0099 against 0.0039. Use the failure bound for "how likely is a failure".
 > - **Everything is about the test's strategy**, not about the inputs your code meets in production. The failure bound is not the chance that your code has a bug.
 > - **Measure coverage in a debug build, one test at a time.** Optimisation can drop counter updates, and LLVM's counters are shared by the whole process.
 > - **LLVM 23** (Rust nightlies from 2026-08-06) is not supported for regions; the output says so and counts counters instead.
