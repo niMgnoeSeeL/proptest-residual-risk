@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 (2026-09-25)
+
+- With `fork = true` or a `timeout` (which implies fork), the test cases run in child processes that the crate cannot see. It used to report 0 passing test cases and a useless failure bound of 1. It now takes n from proptest's own count, so the failure bound is right, and reports coverage as `not measured: fork mode`. The record has `"fork": true` and `"counts_agree": null`.
+
 ## 0.1.2 (2026-09-25)
 
 - Fixed: when a persisted failure was replayed and failed again, the runner's shrinking calls that passed were counted as new passing test cases in `n` (reported by a user). Only failing runs were affected; the numbers for passing tests were not.

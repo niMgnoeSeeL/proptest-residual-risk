@@ -29,7 +29,7 @@ Every test run appends one JSON line to `<test name>.jsonl` in the records direc
 | Field | Meaning |
 | --- | --- |
 | `test`, `unix_time`, `passed` | Which test, when, and whether it passed |
-| `n`, `runner_successes`, `counts_agree` | Passing new test cases counted by the crate, proptest's `successes`, and whether the two agree |
+| `n`, `runner_successes`, `counts_agree`, `fork` | Passing new test cases counted by the crate, proptest's `successes`, whether the two agree, and whether the test ran in fork mode (then `n` is proptest's count and `counts_agree` is null) |
 | `rejects` | Test cases rejected by `prop_assume!` |
 | `wall_s`, `body_s`, `t_s` | Wall time of the run, time spent in test bodies, and wall time per passing test case |
 | `failure_bound`, `target`, `cases_for_target` | $1-0.05^{1/n}$, the target, and the passing test cases needed in total to go below it |
@@ -45,7 +45,7 @@ Every test run appends one JSON line to `<test name>.jsonl` in the records direc
 ## How it works
 
 1. `proptest_residual_risk::proptest!` takes the same input as proptest's `proptest!` and hands the parsing of its twelve forms to proptest's own `proptest_helper!`. It runs the test through `TestRunner::run` as proptest does, wrapping the test body so that the crate sees every call.
-2. Calls that replay persisted failures are recognised by counting them with `FailurePersistence::load_persisted_failures2`, as the runner does, and are skipped. After the first failure the runner is shrinking, and calls pass through unrecorded.
+2. The crate cannot ask the runner what kind of call it is making, so it infers it from the order of calls. Calls that replay persisted failures come first; the crate knows how many from `FailurePersistence::load_persisted_failures2`, as the runner does, and does not record them. After the first failure, including a replay that fails again, the runner is shrinking, and calls pass through unrecorded. In fork mode the calls happen in child processes, so the crate takes the count of passing test cases from the runner.
 3. For each recorded test case the crate keeps its outcome (pass, reject, fail), its time and, with coverage, the counters and regions it ran.
 4. With the `coverage` feature, it copies LLVM's counters (through `__llvm_profile_begin_counters`) before and after each test case, only those of functions in the code under test. Once per process it reads the coverage mapping from the running test binary's `__llvm_covmap` and `__llvm_covfun` sections (Mach-O or ELF, through the `object` crate), and uses the profile data records (`__llvm_prf_data`) to find each function's counters.
 5. When the runner returns, the crate computes the three numbers, appends the JSON line and, with `RESIDUAL_RISK=1`, prints the block.
@@ -55,7 +55,7 @@ Every test run appends one JSON line to `<test name>.jsonl` in the records direc
 - **LLVM 23.** LLVM 23 changed the layout of the profile data records. Rust nightlies from 2026-08-06 use it. There the crate cannot compute regions: the record gets a `coverage_error`, the output says `coverage: not measured: …` instead of showing zeros, and the chance of new code is counted in counters, ending with `(counted in counters: regions unavailable)`.
 - **Debug builds only for coverage.** In an optimised build LLVM can merge or drop the counter updates of inlined code.
 - **One test at a time.** LLVM's counters are shared by the whole process. Tests using this crate take turns through one lock, but other tests running at the same time would mix in. Use `--test-threads=1` or `cargo nextest`.
-- **`fork = true`** runs test cases in child processes, whose records are lost.
+- **`fork = true` or a `timeout`** (which implies fork) runs test cases in child processes that the crate cannot see. The failure bound then uses proptest's own count of passing test cases and is still right; coverage and the chance of new code are reported as not measured.
 - **Other entry points are not covered.** `#[property_test]`, test-strategy's `#[proptest]` and `prop_state_machine!` do not go through this crate's macro.
 - **The macro relies on a hidden proptest macro** (`proptest_helper!`). A proptest release that changes it would break this crate until updated, which is why the supported proptest versions are pinned.
 

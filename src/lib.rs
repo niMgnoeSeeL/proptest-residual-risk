@@ -107,6 +107,10 @@ pub mod __private {
         // Calls of the test body that replay persisted failures; they come first and are not
         // draws from the strategy, so they are not recorded.
         replays: usize,
+        // With `fork` (or a `timeout`, which implies it) the test cases run in child processes,
+        // so this process never sees them: n then comes from the runner, and coverage is not
+        // measured.
+        forked: bool,
         state: RefCell<State>,
     }
 
@@ -120,6 +124,7 @@ pub mod __private {
             Campaign {
                 test: config.test_name.unwrap_or(fallback_name).to_string(),
                 replays,
+                forked: config.fork(),
                 state: RefCell::new(State::default()),
             }
         }
@@ -195,9 +200,19 @@ pub mod __private {
                 .iter()
                 .filter(|c| c.outcome == Outcome::Reject)
                 .count();
-            let n = passes.len() as u64;
             let stats = format!("{}", runner);
             let successes = field(&stats, "successes:");
+            let n = if self.forked {
+                successes.unwrap_or(0)
+            } else {
+                passes.len() as u64
+            };
+            let coverage_on = coverage::ON && !self.forked;
+            let coverage_error = if coverage::ON && self.forked {
+                Some("fork mode: the test cases run in child processes".to_string())
+            } else {
+                coverage::error()
+            };
             let target = std::env::var("RESIDUAL_RISK_TARGET")
                 .ok()
                 .and_then(|v| v.parse::<f64>().ok())
@@ -212,7 +227,7 @@ pub mod __private {
             let region_sets: Vec<&[u32]> = measured.iter().map(|c| c.regions.as_slice()).collect();
             let total_regions = coverage::total_regions();
             let new_code_regions = estimators::new_code(&region_sets);
-            let regions_ok = coverage::error().is_none() && total_regions.is_some_and(|t| t > 0);
+            let regions_ok = coverage_error.is_none() && total_regions.is_some_and(|t| t > 0);
             let bound = estimators::failure_bound(n);
             let needed = estimators::cases_for_target(target);
             let t = if n > 0 {
@@ -223,7 +238,8 @@ pub mod __private {
             let body_time: f64 = st.cases.iter().map(|c| c.time.as_secs_f64()).sum();
             // The runner's `successes` counts new passing test cases whether or not the test
             // passed overall, so the two counts must agree either way.
-            let consistent = successes.is_none_or(|s| s == n);
+            // In fork mode n is the runner's own count, so there is nothing to compare.
+            let consistent = (!self.forked).then(|| successes.is_none_or(|s| s == n));
 
             let mut json = String::new();
             let now = SystemTime::now()
@@ -233,14 +249,15 @@ pub mod __private {
             let _ = write!(
                 json,
                 "{{\"test\":{},\"unix_time\":{},\"passed\":{},\"n\":{},\"runner_successes\":{},\
-                 \"counts_agree\":{},\"rejects\":{},\"wall_s\":{:.6},\"body_s\":{:.6},\"t_s\":{:.9},\
+                 \"counts_agree\":{},\"fork\":{},\"rejects\":{},\"wall_s\":{:.6},\"body_s\":{:.6},\"t_s\":{:.9},\
                  \"failure_bound\":{:.9},\"target\":{},\"cases_for_target\":{},\"coverage\":{}",
                 quote(&self.test),
                 now,
                 passed,
                 n,
                 successes.map_or("null".to_string(), |s| s.to_string()),
-                consistent,
+                consistent.map_or("null".to_string(), |c| c.to_string()),
+                self.forked,
                 rejects,
                 wall.as_secs_f64(),
                 body_time,
@@ -248,9 +265,12 @@ pub mod __private {
                 bound,
                 target,
                 needed,
-                coverage::ON,
+                coverage_on,
             );
-            if coverage::ON {
+            if let (true, Some(why)) = (coverage::ON && self.forked, &coverage_error) {
+                let _ = write!(json, ",\"coverage_error\":{}", quote(why));
+            }
+            if coverage_on {
                 let _ = write!(
                     json,
                     ",\"distinct_counters\":{},\"singletons\":{},\"k\":{},\"p_new\":{:.9}",
@@ -297,7 +317,7 @@ pub mod __private {
             let dir = out_dir();
             let file = sanitize(&self.test);
             append(&dir.join(format!("{file}.jsonl")), &json);
-            if coverage::ON && std::env::var("RESIDUAL_RISK_TRACE").as_deref() == Ok("1") {
+            if coverage_on && std::env::var("RESIDUAL_RISK_TRACE").as_deref() == Ok("1") {
                 let mut trace = format!(
                     "{{\"test\":{},\"unix_time\":{now},\"sets\":[",
                     quote(&self.test)
@@ -326,10 +346,10 @@ pub mod __private {
                 } else {
                     let _ = writeln!(out, "proptest: {} passing test cases", group(n));
                     out.push_str(&stats);
-                    if let Some(why) = coverage::error() {
+                    if let Some(why) = &coverage_error {
                         let _ = writeln!(out, "\tcoverage: not measured: {why}");
                     }
-                    if coverage::ON {
+                    if coverage_on {
                         match total_regions {
                             Some(total) if total > 0 => {
                                 let _ = writeln!(
@@ -395,7 +415,7 @@ pub mod __private {
                     } else {
                         let _ = writeln!(out, "\t         already below {}", target);
                     }
-                    if !consistent {
+                    if consistent == Some(false) {
                         let _ = writeln!(
                             out,
                             "\tnote: counted {} passing test cases, the runner counted {:?}",
