@@ -8,7 +8,7 @@ Three questions, each measured with this crate (proptest 1.11.0, rustc 1.98.1, m
 | --- | --- | --- |
 | [Does the failure bound hold?](#the-failure-bound) | **Yes.** Below the true failure probability in 4.6% of the campaigns where it can be wrong; the promise is at most 5%. | 28 bugs in Etna, 25,200 campaigns |
 | [Is the chance of new code accurate?](#the-chance-of-new-code) | **On average, yes. Per run, no:** too low in 18% of campaigns. It is an estimate, not a bound. | 199 properties of 57 real crates, 3,976 campaigns |
-| [What does it cost?](#the-cost) | **1.03×** with coverage off, **2.25×** with coverage under cargo-llvm-cov, **3.42×** with `RUSTFLAGS` (time relative to plain proptest, geometric mean) | 11 properties of those crates |
+| [What does it cost?](#the-cost) | **1.06×** with coverage off, **2.25×** with coverage under cargo-llvm-cov, **3.42×** with `RUSTFLAGS` (time relative to plain proptest, geometric mean) | 11 properties of those crates |
 
 A *campaign* is one run of one test: its test cases until it passes (or fails).
 
@@ -61,7 +61,7 @@ A *campaign* is one run of one test: its test cases until it passes (or fails).
 
 | Setting | Time relative to plain proptest: geometric mean (range) |
 | --- | --- |
-| Coverage off (the failure bound only) | 1.03× (0.99–1.26×) |
+| Coverage off (the failure bound only) | 1.06× (1.00–1.34×) |
 | Coverage, under `cargo llvm-cov --no-report` | 2.25× (1.09–7.14×) |
 | Coverage, with `RUSTFLAGS="-C instrument-coverage"` | 3.42× (1.10–28.39×) |
 | For comparison: plain proptest under cargo-llvm-cov, test run / with report | 1.08× / 2.70× |
@@ -75,6 +75,6 @@ A *campaign* is one run of one test: its test cases until it passes (or fails).
 
 - **Tests:** 11 of the properties above, chosen before timing to span cheap and expensive test bodies, small and large crates, and many rejected inputs.
 - **Campaigns:** 5,256 passing test cases, seeds 1–3, one process at a time; for every property and seed all settings ran one after another in rotating order, so that they saw the same machine load.
-- **Numbers:** the median campaign time per property, divided by that of plain proptest; the geometric mean over the 11 properties.
+- **Numbers:** the median campaign time per property, divided by that of plain proptest; the geometric mean over the 11 properties. The coverage-off row comes from a larger run (seeds 1–5, three repetitions each); a smaller run gave 1.03×, within the measurement noise.
 - The measurement scripts and raw results belong to the research project this crate came from and are not in this repository.
 </details>
