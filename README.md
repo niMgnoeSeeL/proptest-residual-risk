@@ -10,7 +10,7 @@
   <a href="https://github.com/niMgnoeSeeL/proptest-residual-risk/actions/workflows/ci.yml"><img src="https://github.com/niMgnoeSeeL/proptest-residual-risk/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="License: MIT OR Apache-2.0">
   <img src="https://img.shields.io/badge/rust-1.86%2B-orange" alt="Rust 1.86 or newer">
-  <img src="https://img.shields.io/badge/proptest-1.10%20%7C%201.11-green" alt="proptest 1.10 and 1.11">
+  <img src="https://img.shields.io/badge/proptest-1.10%20%7C%201.11%20%7C%201.12-green" alt="proptest 1.10, 1.11 and 1.12">
 </p>
 
 When a proptest test passes, `cargo test` prints `ok` and nothing else. 256 test cases found no counterexample, but was 256 enough? This crate reports three numbers for every passing test, without changing how proptest generates or runs test cases:
@@ -95,7 +95,7 @@ The right-hand side of the picture above, line by line:
 
 ## Supported versions
 
-Rust 1.86 or newer; coverage needs LLVM 19–22 (stable rustc 1.86–1.98). proptest 1.10 and 1.11. Tested in CI on Linux and macOS, and with Rust 1.86.
+Rust 1.86 or newer; coverage needs LLVM 19–22 (stable rustc 1.86–1.98). proptest 1.10, 1.11 and 1.12 (proptest 1.12 needs Rust 1.88). Tested in CI on Linux and macOS, and with Rust 1.86.
 
 ## License
 

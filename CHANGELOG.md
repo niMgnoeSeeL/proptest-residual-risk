@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 (2026-10-19)
+
+- Supports proptest 1.12 (`>=1.10, <1.13`). With proptest 1.12, which came out on 2026-10-10, the crate could not be added at all: Cargo failed to select a proptest version. The macros the crate relies on (`proptest!`, `proptest_helper!`) are unchanged in 1.12, and all tests pass with 1.10, 1.11 and 1.12. proptest 1.12 itself needs Rust 1.88.
+
 ## 0.1.3 (2026-09-25)
 
 - With `fork = true` or a `timeout` (which implies fork), the test cases run in child processes that the crate cannot see. It used to report 0 passing test cases and a useless failure bound of 1. It now takes n from proptest's own count, so the failure bound is right, and reports coverage as `not measured: fork mode`. The record has `"fork": true` and `"counts_agree": null`.

@@ -63,8 +63,8 @@ Every test run appends one JSON line to `<test name>.jsonl` in the records direc
 
 - **Rust:** 1.86 or newer (`rust-version = "1.86"`).
 - **Coverage:** LLVM 19–22, which is stable rustc 1.86–1.98.
-- **proptest:** 1.10 and 1.11 (`>=1.10, <1.12`); each new release is checked before the range is widened.
-- **Checked** on macOS arm64 with rustc 1.86.0 (LLVM 19), 1.87.0 (LLVM 20) and 1.98.1 (LLVM 22), proptest 1.10.0 and 1.11.0, and the lowest versions of `object`, `miniz_oxide` and `md5` that `Cargo.toml` allows. CI runs the tests with and without coverage on Linux and macOS with stable Rust, and on Linux with Rust 1.86.
+- **proptest:** 1.10, 1.11 and 1.12 (`>=1.10, <1.13`); each new release is checked before the range is widened. proptest 1.12 needs Rust 1.88, so with Rust 1.86–1.87 use proptest 1.11 or older.
+- **Checked** on macOS arm64 with rustc 1.86.0 (LLVM 19), 1.87.0 (LLVM 20) and 1.98.1 (LLVM 22), proptest 1.10.0 and 1.11.0 (and 1.12.0 with rustc 1.98.1), and the lowest versions of `object`, `miniz_oxide` and `md5` that `Cargo.toml` allows. CI runs the tests with and without coverage on Linux and macOS with stable Rust, and on Linux with Rust 1.86 and proptest 1.11.
 
 ## Running this crate's tests
 
