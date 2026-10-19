@@ -3,6 +3,11 @@ name: CI
 on:
   push:
   pull_request:
+  # Every Monday, so that a new stable Rust (and LLVM) or a new proptest release that breaks
+  # the crate shows up within a week, not when a user hits it.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
