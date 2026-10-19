@@ -16,7 +16,7 @@
 //! the first run of "inside". Counting regions does not: the mapping says how to compute every
 //! region's count, and a region ran in a test case when that count went up.
 //!
-//! Formats (all little-endian), as written by LLVM 19-22 (rustc 1.86-1.98):
+//! Formats (all little-endian), as written by LLVM 19-23 (rustc 1.86-1.99):
 //! - `__llvm_covmap`: one record per compilation unit: four u32 (0, filenames size, 0, version),
 //!   then the filenames blob, padded to 8 bytes. A function refers to its unit's blob by the low
 //!   64 bits of the blob's MD5.

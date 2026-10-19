@@ -3,6 +3,7 @@
 ## 0.1.4 (2026-10-19)
 
 - Supports proptest 1.12 (`>=1.10, <1.13`). With proptest 1.12, which came out on 2026-10-10, the crate could not be added at all: Cargo failed to select a proptest version. The macros the crate relies on (`proptest!`, `proptest_helper!`) are unchanged in 1.12, and all tests pass with 1.10, 1.11 and 1.12. proptest 1.12 itself needs Rust 1.88.
+- Reads LLVM 23's profile data layout, which stable Rust uses since 1.99 (2026-09-28). With Rust 1.99, coverage in regions was not measured: LLVM 23 added two fields to each record, so the crate fell back to counters and said so. Both layouts are now tried, and the one whose records cover the counter array exactly is used.
 
 ## 0.1.3 (2026-09-25)
 

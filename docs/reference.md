@@ -52,7 +52,7 @@ Every test run appends one JSON line to `<test name>.jsonl` in the records direc
 
 ## Known limitations
 
-- **LLVM 23.** LLVM 23 changed the layout of the profile data records. Rust nightlies from 2026-08-06 use it. There the crate cannot compute regions: the record gets a `coverage_error`, the output says `coverage: not measured: …` instead of showing zeros, and the chance of new code is counted in counters, ending with `(counted in counters: regions unavailable)`.
+- **A newer LLVM.** Each LLVM version may change the layout of the profile data records that tell which counters belong to which function. The crate reads the layouts of LLVM 19–22 and LLVM 23 (stable Rust 1.99, 2026-09-28, moved to LLVM 23). If a later LLVM changes it again, the record gets a `coverage_error`, the output says `coverage: not measured: …` instead of showing zeros, and the chance of new code is counted in counters, ending with `(counted in counters: regions unavailable)`.
 - **Debug builds only for coverage.** In an optimised build LLVM can merge or drop the counter updates of inlined code.
 - **One test at a time.** LLVM's counters are shared by the whole process. Tests using this crate take turns through one lock, but other tests running at the same time would mix in. Use `--test-threads=1` or `cargo nextest`.
 - **`fork = true` or a `timeout`** (which implies fork) runs test cases in child processes that the crate cannot see. The failure bound then uses proptest's own count of passing test cases and is still right; coverage and the chance of new code are reported as not measured.
@@ -62,9 +62,9 @@ Every test run appends one JSON line to `<test name>.jsonl` in the records direc
 ## Supported versions
 
 - **Rust:** 1.86 or newer (`rust-version = "1.86"`).
-- **Coverage:** LLVM 19–22, which is stable rustc 1.86–1.98.
+- **Coverage:** LLVM 19–23, which is stable rustc 1.86 and newer (LLVM 23 since rustc 1.99).
 - **proptest:** 1.10, 1.11 and 1.12 (`>=1.10, <1.13`); each new release is checked before the range is widened. proptest 1.12 needs Rust 1.88, so with Rust 1.86–1.87 use proptest 1.11 or older.
-- **Checked** on macOS arm64 with rustc 1.86.0 (LLVM 19), 1.87.0 (LLVM 20) and 1.98.1 (LLVM 22), proptest 1.10.0 and 1.11.0 (and 1.12.0 with rustc 1.98.1), and the lowest versions of `object`, `miniz_oxide` and `md5` that `Cargo.toml` allows. CI runs the tests with and without coverage on Linux and macOS with stable Rust, and on Linux with Rust 1.86 and proptest 1.11.
+- **Checked** on macOS arm64 with rustc 1.86.0 (LLVM 19), 1.87.0 (LLVM 20), 1.98.1 (LLVM 22) and 1.99.1 (LLVM 23), proptest 1.10.0 and 1.11.0 (and 1.12.0 with rustc 1.98.1), and the lowest versions of `object`, `miniz_oxide` and `md5` that `Cargo.toml` allows. CI runs the tests with and without coverage on Linux and macOS with stable Rust, and on Linux with Rust 1.86 and proptest 1.11.
 
 ## Running this crate's tests
 

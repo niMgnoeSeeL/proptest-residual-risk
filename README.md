@@ -81,7 +81,7 @@ The right-hand side of the picture above, line by line:
 > - **The chance of new code does not bound the chance of failure.** The next test case can be more likely to fail than to run new code; in the example on the theory page they are 0.0099 against 0.0039. Use the failure bound for "how likely is a failure".
 > - **Everything is about the test's strategy**, not about the inputs your code meets in production. The failure bound is not the chance that your code has a bug.
 > - **Measure coverage in a debug build, one test at a time.** Optimisation can drop counter updates, and LLVM's counters are shared by the whole process.
-> - **LLVM 23** (Rust nightlies from 2026-08-06) is not supported for regions; the output says so and counts counters instead.
+> - **A newer LLVM** may change the layout the crate reads; then the output says `coverage: not measured` and counts counters instead of regions.
 >
 > Details and examples: [Theory, assumptions and caveats](docs/theory.md#assumptions-and-caveats).
 
@@ -95,7 +95,7 @@ The right-hand side of the picture above, line by line:
 
 ## Supported versions
 
-Rust 1.86 or newer; coverage needs LLVM 19–22 (stable rustc 1.86–1.98). proptest 1.10, 1.11 and 1.12 (proptest 1.12 needs Rust 1.88). Tested in CI on Linux and macOS, and with Rust 1.86.
+Rust 1.86 or newer; coverage needs LLVM 19–23 (stable rustc 1.86 and newer, checked up to 1.99). proptest 1.10, 1.11 and 1.12 (proptest 1.12 needs Rust 1.88). Tested in CI on Linux and macOS, and with Rust 1.86.
 
 ## License
 

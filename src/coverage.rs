@@ -61,46 +61,69 @@ mod imp {
         out
     }
 
-    /// Size of one profile data record (LLVM 19-22).
-    const RECORD: usize = 64;
+    /// The layouts of a profile data record that this crate reads (compiler-rt's
+    /// InstrProfData.inc): the record size and the offset of its number of counters. Both start
+    /// with the name hash (0), the function hash (8) and the counter pointer relative to the record
+    /// (16). LLVM 23 added a uniform-counter pointer after the counter pointer and a 16-bit wave
+    /// size after the value-site counts.
+    const LAYOUTS: [(&str, usize, usize); 2] = [("LLVM 19-22", 64, 48), ("LLVM 23", 72, 56)];
 
     /// Each function's (name, hash) and the (start, length) of its counters in the counter array.
     type Records = HashMap<(u64, u64), (usize, usize)>;
 
     /// (name hash, function hash) -> (first counter index, number of counters), or why the
-    /// records could not be read. The records of a readable layout cover the counter array
-    /// exactly; any other total means the layout is not the one assumed here (LLVM 19-22).
+    /// records could not be read. The records of the right layout cover the counter array
+    /// exactly, so each known layout is tried and the one that does is used.
     fn data_records() -> Result<Records, String> {
+        let mut tried = Vec::new();
+        for (name, size, at_n) in LAYOUTS {
+            match records_as(size, at_n) {
+                Ok(out) => return Ok(out),
+                Err(covered) => tried.push(format!("{name}: records cover {covered}")),
+            }
+        }
+        Err(format!(
+            "the LLVM profile data layout is not one this crate reads ({}; the counter array has \
+             {} counters)",
+            tried.join(", "),
+            counters().len()
+        ))
+    }
+
+    /// The records read with one layout, or how many counters they cover when that is not the
+    /// whole counter array.
+    fn records_as(size: usize, at_n: usize) -> Result<Records, usize> {
         let mut out = HashMap::new();
         let mut covered = 0usize;
-        // SAFETY: the data section is static and laid out as in compiler-rt's InstrProfData.inc.
+        // SAFETY: the data section is static and holds records of one of LAYOUTS; a wrong layout
+        // only gives wrong numbers, which the coverage check below rejects.
         unsafe {
             let begin = __llvm_profile_begin_data();
             let end = __llvm_profile_end_data();
             let len = end.offset_from(begin).max(0) as usize;
+            if len % size != 0 {
+                return Err(0);
+            }
             let bytes = std::slice::from_raw_parts(begin, len);
             let base = __llvm_profile_begin_counters() as usize;
-            for (i, r) in bytes.chunks_exact(RECORD).enumerate() {
+            for (i, r) in bytes.chunks_exact(size).enumerate() {
                 let name = u64::from_le_bytes(r[0..8].try_into().unwrap());
                 let hash = u64::from_le_bytes(r[8..16].try_into().unwrap());
                 let rel = i64::from_le_bytes(r[16..24].try_into().unwrap());
-                let n = u32::from_le_bytes(r[48..52].try_into().unwrap()) as usize;
-                let at = (begin as usize + i * RECORD) as i64 + rel;
+                let n = u32::from_le_bytes(r[at_n..at_n + 4].try_into().unwrap()) as usize;
+                let at = (begin as usize + i * size) as i64 + rel;
                 if n == 0 || (at as usize) < base {
                     continue;
                 }
                 out.insert((name, hash), ((at as usize - base) / 8, n));
-                covered += n;
-            }
-            if len % RECORD != 0 || covered != counters().len() {
-                return Err(format!(
-                    "the LLVM profile data layout is not the one this crate reads (LLVM 19-22): \
-                     records cover {covered} of {} counters",
-                    counters().len()
-                ));
+                covered = covered.saturating_add(n);
             }
         }
-        Ok(out)
+        if covered == counters().len() {
+            Ok(out)
+        } else {
+            Err(covered)
+        }
     }
 
     fn read_mapping() -> Option<Mapping> {
