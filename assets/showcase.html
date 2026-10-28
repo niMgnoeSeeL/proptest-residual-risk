@@ -1,28 +1,17 @@
 <!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0}
-body{width:1600px;height:900px;background:#fafaf7;font-family:Inter,system-ui,sans-serif;color:#1d2125;padding:64px 72px 56px;display:flex;flex-direction:column}
-h1{font-size:46px;font-weight:700;letter-spacing:-0.5px}
-.sub{font-size:26px;color:#5b616b;margin-top:10px}
-.grid{display:grid;grid-template-columns:440px 1fr;column-gap:28px;row-gap:12px;margin-top:44px;align-items:start}
-.cap{font-size:23px;font-weight:600;color:#5b616b;white-space:nowrap}
-.term{background:#14171c;border-radius:14px;padding:26px 30px;font-family:"JetBrains Mono",monospace;color:#e6e6e6;font-size:23px;line-height:1.65;white-space:pre;overflow:hidden}
+body{width:1226px;background:#ffffff;font-family:Inter,system-ui,sans-serif;padding:14px 10px 10px;display:inline-block}
+.grid{display:grid;grid-template-columns:344px 1fr;column-gap:16px;row-gap:8px;align-items:start}
+.cap{font-size:20px;font-weight:600;color:#57606a;white-space:nowrap}
+.term{background:#14171c;border-radius:10px;padding:16px 18px;font-family:"JetBrains Mono",monospace;color:#e6e6e6;font-size:19.5px;line-height:1.6;white-space:pre}
 .dim{color:#9aa0a8}.cov{color:#7cc4ff}.new{color:#f5c04a}.fail{color:#5fd38a}.g{color:#5fd38a}
-.legend{grid-column:2;margin-top:18px;font-size:23px;line-height:1.55;color:#3a4048}
-.legend div{display:flex;gap:14px}
-.legend b{font-family:"JetBrains Mono",monospace;font-weight:700;min-width:150px}
-.legend .f{color:#1a8a4a}.legend .c{color:#1f6fb2}.legend .n{color:#a87400}
-.foot{margin-top:auto;display:flex;justify-content:space-between;font-size:22px;color:#5b616b}
-</style></head><body>
-<h1>What a passing proptest run tells you</h1>
-<div class="sub">The same test, run without and with proptest-residual-risk</div>
-<div class="grid">
-  <div class="cap">proptest</div>
-  <div class="cap">proptest + proptest-residual-risk</div>
-  <div class="term"><span class="g">$</span> cargo test
+</style></head><body><div class="grid">
+<div class="cap">proptest</div><div class="cap">with proptest-residual-risk</div>
+<div class="term"><span class="g">$</span> cargo test
 <span class="dim">test clamp_in_range ... ok</span></div>
-  <div class="term"><span class="g">$</span> RESIDUAL_RISK=1 cargo llvm-cov --no-report \
+<div class="term"><span class="g">$</span> RESIDUAL_RISK=1 cargo llvm-cov --no-report \
     -- --test-threads=1 --nocapture
 proptest: 256 passing test cases
     ...
@@ -31,11 +20,4 @@ proptest: 256 passing test cases
     <span class="fail">failure: at most 0.012 chance per test case (95% confidence)</span>
              ...
 <span class="dim">test clamp_in_range ... ok</span></div>
-  <div class="legend">
-    <div><b class="c">coverage</b><span>regions of the code under test that the 256 test cases ran</span></div>
-    <div><b class="n">new code</b><span>estimated chance that the next test case runs a region none has run</span></div>
-    <div><b class="f">failure</b><span>upper bound (95%) on the chance that the next test case fails</span></div>
-  </div>
-</div>
-<div class="foot"><span>All three are about inputs from the test's own generator.</span><span>crates.io/crates/proptest-residual-risk</span></div>
-</body></html>
+</div></body></html>
