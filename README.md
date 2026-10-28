@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/showcase.png" alt="The same passing test, run without and with proptest-residual-risk. Left, plain proptest: cargo test prints only 'test clamp_in_range ... ok'. Right, with proptest-residual-risk under cargo llvm-cov: after proptest's own counts it also prints coverage (9 of 12 regions, 75%), new code (about 0.0039 chance per test case) and failure (at most 0.012 chance per test case, 95% confidence)." width="100%">
+  <img src="assets/outputs.png" alt="The same passing test, run without and with proptest-residual-risk. Left, plain proptest: cargo test prints only 'test clamp_in_range ... ok'. Right, with proptest-residual-risk under cargo llvm-cov: after proptest's own counts it also prints coverage (9 of 12 regions, 75%), new code (about 0.0039 chance per test case) and failure (at most 0.012 chance per test case, 95% confidence)." width="100%">
 </p>
 
 <h1 align="center">proptest-residual-risk</h1>
