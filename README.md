@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/showcase.svg" alt="Left, plain proptest: cargo test prints only 'test tests::clamp_in_range ... ok'. Right, with proptest-residual-risk: the same passing test also reports coverage (9 of 12 regions), the chance of new code (about 0.0039 per test case) and a failure bound (at most 0.012 per test case, 95% confidence)" width="100%">
+  <img src="assets/showcase.png" alt="The same passing test, run without and with proptest-residual-risk. Left, plain proptest: cargo test prints only 'test clamp_in_range ... ok'. Right, with proptest-residual-risk under cargo llvm-cov: after proptest's own counts it also prints coverage (9 of 12 regions, 75%), new code (about 0.0039 chance per test case) and failure (at most 0.012 chance per test case, 95% confidence). Below, one line says what each of the three means; all three are about inputs from the test's own generator." width="100%">
 </p>
 
 <h1 align="center">proptest-residual-risk</h1>
@@ -63,7 +63,7 @@ cargo-llvm-cov instruments only your own crates, not dependencies such as propte
 
 ## Reading the output
 
-The right-hand side of the picture above, line by line:
+The output, line by line (the picture above shortens proptest's own counts to `...`):
 
 | Line | Meaning |
 | --- | --- |
