@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5 (2026-10-27)
+
+- Fixed: a record line could be cut into another one. Each line was written to the record file in two writes, the text and then the newline, so two tests that share a name and finish at the same time could interleave them and leave a broken JSON line. The line is now written in one write.
+- `body_s` in the record is now `0.000000` rather than `-0.000000` when no test body ran in this process (fork mode).
+
 ## 0.1.4 (2026-10-19)
 
 - Supports proptest 1.12 (`>=1.10, <1.13`). With proptest 1.12, which came out on 2026-10-10, the crate could not be added at all: Cargo failed to select a proptest version. The macros the crate relies on (`proptest!`, `proptest_helper!`) are unchanged in 1.12, and all tests pass with 1.10, 1.11 and 1.12. proptest 1.12 itself needs Rust 1.88.

@@ -235,7 +235,8 @@ pub mod __private {
             } else {
                 0.0
             };
-            let body_time: f64 = st.cases.iter().map(|c| c.time.as_secs_f64()).sum();
+            // A fold from 0.0 rather than `sum`, which gives -0.0 when there is nothing to add.
+            let body_time = st.cases.iter().fold(0.0, |t, c| t + c.time.as_secs_f64());
             // The runner's `successes` counts new passing test cases whether or not the test
             // passed overall, so the two counts must agree either way.
             // In fork mode n is the runner's own count, so there is nothing to compare.
@@ -469,7 +470,9 @@ pub mod __private {
             .append(true)
             .open(path)
         {
-            let _ = writeln!(f, "{line}");
+            // One write of the whole line: tests running at the same time append to the same
+            // file, and separate writes of the text and the newline could interleave.
+            let _ = f.write_all(format!("{line}\n").as_bytes());
         }
     }
 
@@ -528,6 +531,44 @@ pub mod __private {
             out.push(c);
         }
         out
+    }
+
+    #[cfg(test)]
+    mod tests {
+        // Tests that run at the same time append to the same record file when they share a
+        // name; their lines must not interleave.
+        #[test]
+        fn lines_appended_at_the_same_time_stay_whole() {
+            let path = std::env::temp_dir().join(format!(
+                "proptest-residual-risk-append-{}.jsonl",
+                std::process::id()
+            ));
+            let _ = std::fs::remove_file(&path);
+            let filler = "x".repeat(200);
+            std::thread::scope(|s| {
+                for t in 0..8 {
+                    let (path, filler) = (&path, &filler);
+                    s.spawn(move || {
+                        for i in 0..500 {
+                            super::append(path, &format!("{t}-{i}-{filler}"));
+                        }
+                    });
+                }
+            });
+            let text = std::fs::read_to_string(&path).unwrap();
+            let _ = std::fs::remove_file(&path);
+            let lines: Vec<&str> = text.lines().collect();
+            assert_eq!(lines.len(), 8 * 500);
+            for line in lines {
+                let mut parts = line.splitn(3, '-');
+                let (t, i) = (parts.next().unwrap(), parts.next().unwrap());
+                assert!(
+                    t.parse::<u32>().is_ok() && i.parse::<u32>().is_ok(),
+                    "{line}"
+                );
+                assert_eq!(parts.next(), Some(filler.as_str()), "{line}");
+            }
+        }
     }
 }
 
